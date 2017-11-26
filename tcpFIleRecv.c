@@ -22,16 +22,17 @@
 //= WWW: http://www.csee.usf.edu/~christen =
 //= Email: christen@csee.usf.edu =
 //=---------------------------------------------------------------------------=
-//= History: KJC (08/04/17) - Genesis (from tcpServer.c) =
+//= History: 
+(08/04/17) - Genesis (from tcpServer.c) =
 //=============================================================================
-#define WIN // WIN for Winsock and BSD for BSD sockets
+#define BSD // WIN for Winsock and BSD for BSD sockets
 //----- Include files ---------------------------------------------------------
 #include <stdio.h> // Needed for printf()
 #include <string.h> // Needed for memcpy() and strcpy()
 #include <stdlib.h> // Needed for exit()
 #include <fcntl.h> // Needed for file i/o constants
-#include <sys\stat.h> // Needed for file i/o constants
-#include <io.h> // Needed for open(), close(), and eof()
+#include <sys/stat.h> // Needed for file i/o constants
+#include <sys/io.h> // Needed for open(), close(), and eof()
 #ifdef WIN
  #include <windows.h> // Needed for all Winsock stuff
 #endif
@@ -40,16 +41,16 @@
  #include <netinet/in.h> // Needed for sockets stuff
  #include <sys/socket.h> // Needed for sockets stuff
  #include <arpa/inet.h> // Needed for sockets stuff
- #include <fcntl.h> // Needed for sockets stuff
+ #include <sys/fcntl.h> // Needed for sockets stuff
  #include <netdb.h> // Needed for sockets stuff
 #endif
 //----- Defines ---------------------------------------------------------------
-#define PORT_NUM 1050 // Arbitrary port number for the server
+#define PORT_NUM 6085 // Arbitrary port number for the server
 #define SIZE 256 // Buffer size
 #define RECV_FILE "recvFile.dat" // File name of received file
 //----- Prototypes ------------------------------------------------------------
 int recvFile(char *fileName, int portNum, int maxSize, int options); 
-//KJC (as2_3sol.doc – 10/10/17) Page 13 of 15
+
 //===== Main program ==========================================================
 int main()
 {
@@ -136,9 +137,11 @@ int recvFile(char *fileName, int portNum, int maxSize, int options)
  printf("*** ERROR - accept() failed \n");
  exit(-1);
  }
+ #ifndef O_BINARY
+    #define O_BINARY 0
+ #endif
  // Open IN_FILE for file to write
- fh = open(fileName, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY,
- S_IREAD | S_IWRITE);
+ fh = open(fileName, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, S_IREAD | S_IWRITE);
  if (fh == -1)
  {
  printf(" *** ERROR - unable to create '%s' \n", RECV_FILE);
@@ -156,7 +159,7 @@ int recvFile(char *fileName, int portNum, int maxSize, int options)
  write(fh, in_buf, length);
  } while (length > 0);
  
-// KJC (as2_3sol.doc – 10/10/17) Page 15 of 15
+
  // Close the received file
  close(fh);
  // Close the welcome and connect sockets
@@ -195,4 +198,3 @@ int recvFile(char *fileName, int portNum, int maxSize, int options)
  // Return zero
  return(0); 
  }
-//
