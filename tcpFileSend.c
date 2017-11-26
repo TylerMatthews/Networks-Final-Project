@@ -44,7 +44,7 @@
  #include <netdb.h> // Needed for sockets stuff
 #endif
 //----- Defines ---------------------------------------------------------------
-#define PORT_NUM 1050 // Port number used at the server
+#define PORT_NUM 6085 // Port number used at the server
 #define SIZE 256 // Buffer size
 //----- Prototypes ------------------------------------------------------------
 int sendFile(char *fileName, char *destIpAddr, int destPortNum, int options); 
