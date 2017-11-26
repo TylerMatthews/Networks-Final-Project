@@ -103,7 +103,7 @@ int sendFile(char *fileName, char *destIpAddr, int destPortNum, int options)
  WORD wVersionRequested = MAKEWORD(1,1); // Stuff for WSA functions
  WSADATA wsaData; // Stuff for WSA functions
 #endif 
- //KJC (as2_3sol.doc – 10/10/17) Page 10 of 15
+ 
  int client_s; // Client socket descriptor
  struct sockaddr_in server_addr; // Server Internet address
  char out_buf[4096]; // Output buffer for data
@@ -153,7 +153,7 @@ int sendFile(char *fileName, char *destIpAddr, int destPortNum, int options)
  // Close the file that was sent to the receiver
  close(fh);
  
-//KJC (as2_3sol.doc – 10/10/17) Page 11 of 15
+
 // Close the client socket
 #ifdef WIN
  retcode = closesocket(client_s);
