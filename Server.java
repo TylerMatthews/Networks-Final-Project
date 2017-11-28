@@ -1,14 +1,10 @@
-
-
-
-
-
-
-
-
-
-
-
+//****************************************************************************
+// 
+// Authors:Tyler Matthews U#09879383, Navin Ramkishun U#58568482
+// Date: 11/23/2017
+// Simple StopWatch class used for timing file transfers
+// Some programs we looked at at https://goo.gl/hb84go, https://goo.gl/ufgcBy
+//***************************************************************************
 import java.io.*;
 import java.net.*;
 
@@ -16,7 +12,7 @@ class Server
 {
 
     private static int totalTransferred = 0;
-    private static StartTime timer;
+    private static StopWatch timer;
     private static String fileName = "";
     private static String decodedDataUsingUTF82 = null;
 
@@ -50,7 +46,7 @@ class Server
 
         String savedFileName = decodedDataUsingUTF82.trim();
         fileName = savedFileName;
-        setFileName(savedFileName);
+        setFile(savedFileName);
         File file = new File(fileName);
         FileOutputStream outToFile = new FileOutputStream(file);
 
@@ -71,10 +67,10 @@ class Server
             String decodedDataUsingUTF8 = new String(finalStatData, "UTF-8");
             Statistics.blankLine();
             Statistics.blankLine();
-            System.out.println("Statistics of transfer");
+            System.out.println("Transfer Statistics");
             Statistics.dividerLine();
-            System.out.println("File saved as: " + getFileName());
-            System.out.println("File Transfer statistics");
+            System.out.println("File name: " + getFile());
+            System.out.println("Transfer statistics");
             System.out.println("" + decodedDataUsingUTF8.trim());
             Statistics.dividerLine();
 
@@ -97,7 +93,7 @@ class Server
         while (true) 
         {
             byte[] message = new byte[1024];
-            byte[] fileByteArray = new byte[1021];
+            byte[] transferArray = new byte[1021];
 
             // Receive packet and retrieve message
             DatagramPacket receivedPacket = new DatagramPacket(message, message.length);
@@ -106,55 +102,70 @@ class Server
 
             message = receivedPacket.getData();
             totalTransferred = receivedPacket.getLength() + totalTransferred;
-            totalTransferred = Math.round(totalTransferred);
+            totalTransferred = ( Math.round((int)totalTransferred));
 
             // start the timer at the point transfer begins
             if (sequenceNumber == 0) 
             {
-                timer = new StartTime();
+                timer = new StopWatch();
             }
 
-            if (Math.round(totalTransferred / 1000) % 50 == 0) 
+            //Periodically print out the stats of the transfer
+            if (Math.round((int)totalTransferred / 1000) % 100 == 0) 
             {
                 double previousTimeElapsed = 0;
-                int previousSize = 0;
-                Statistics.printStats(totalTransferred, previousSize,
-                        timer);
+                int prevSize = 0;
+                //Statistics.printStats(totalTransferred, prevSize,
+                 //       timer);
             }
             // Get port and address for sending acknowledgment
             InetAddress address = receivedPacket.getAddress();
             int port = receivedPacket.getPort();
 
-            // Retrieve sequence number
+            //Get the current sequence number.
             sequenceNumber = ((message[0] & 0xff) << 8) + (message[1] & 0xff);
-            // Retrieve the last message flag
-            // a returned value of true means we have a problem
+
+            //get the previous message flag
             flag = (message[2] & 0xff) == 1;
-            // if sequence number is the last one +1, then it is correct
-            // we get the data from the message and write the message
-            // that it has been received correctly
+            //as int as the Sequence number is = to previous sequence number +1
+            //everything is ok
+
+            //Reset the sequence number/findLast when you hit ~50MB of data,
+            //which lets you get around the 65536 byte max of UDP
+            //When the Client resets the sequence number to 1, we reset findLast
+            //(the previous sequence number) to 0, to ensure program stability
+            if (sequenceNumber == 1)
+            {
+                findLast = 0;
+            }
             if (sequenceNumber == (findLast + 1)) 
             {
 
-                // set the last sequence number to be the one we just received
+                //Sets the last sequence number to the one we just received
                 findLast = sequenceNumber;
 
-                // Retrieve data from message
-                System.arraycopy(message, 3, fileByteArray, 0, 1021);
+                //get the data from the message
+                System.arraycopy(message, 3, transferArray, 0, 1021);
 
-                // Write the message to the file and print received message
-                outToFile.write(fileByteArray);
-                System.out.println("Received: Sequence number:"
-                        + findLast);
+                //print the received file, write message to array
+                outToFile.write(transferArray);
+                
+                //THe below prints out each Ack as it is received.
+                //Commented out as it severely slows down program execution
+                //System.out.println("Received: Sequence number:"
+                //        + findLast);
 
-                // Send acknowledgement
+                //Send the acknowledgement to the client
                 sendAck(findLast, socket, address, port);
             } 
             else 
+            //if current sequence number does not = previous number +1,
+            //something went wrong. Print the error message, resend the Ack
             {
-                System.out.println("Expected sequence number: "
-                        + (findLast + 1) + " but received "
-                        + sequenceNumber + ". DISCARDING");
+              //Commenting out as it can severly lower performanc
+              //  System.out.println("Sequence num should be: "
+                  //      + (findLast + 1) + ", received num was:  "
+                 //       + sequenceNumber + ". packet discard");
                 // Re send the acknowledgement
                 sendAck(findLast, socket, address, port);
             }
@@ -169,15 +180,15 @@ class Server
     }
 
     //Gets the file name
-    private static String getFileName() 
+    private static String getFile() 
     {
         return fileName;
     }
 
     //Sets the file name
-    private static void setFileName(String passed_file_name) 
+    private static void setFile(String theFileName) 
     {
-        fileName = passed_file_name;
+        fileName = theFileName;
     }
 
     //Function to send Acknowledgement for received packets. Used to help ensure all packets received by the server
@@ -191,6 +202,8 @@ class Server
         DatagramPacket acknowledgement = new DatagramPacket(ackPacket,
                 ackPacket.length, address, port);
         socket.send(acknowledgement);
-        System.out.println("Ack has been sent: Sequence Number = " + findLast);
+        //The below prints out a line for each Acknowledgement, so you can see where
+        //any errors are, if needed.
+        //System.out.println("Acknowledgement Sent for Sequence Number = " + findLast);
     }
 }
